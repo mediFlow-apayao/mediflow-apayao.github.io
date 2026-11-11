@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediFlow HMS - Flora, Apayao Branch</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
+    .header { background: #0f766e; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 20px; }
+    .card, .archive { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+    .card { flex: 1 1 300px; }
+    h2 { margin-top: 0; font-size: 17px; color: #0f766e; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+    label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 5px; }
+    button { margin-top: 15px; width: 100%; padding: 10px; background: #0f766e; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    .total-box { margin-top: 15px; padding: 12px; background: #f1f5f9; border-radius: 5px; font-weight: bold; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+    th { background: #f8fafc; }
+    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MediFlow Hospital Management System (HMS)</h1>
+    <p>🔒 Flora, Apayao Branch Terminal</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1. Patient Admissions Record</h2>
+      <label>Patient Full Name:</label>
+      <input type="text" id="pName" placeholder="Enter full name" />
+      <label>Medical History / Diagnostics:</label>
+      <textarea id="pHistory" rows="3" placeholder="Enter symptoms or diagnosis"></textarea>
+      <button onclick="saveRecord()">Save File Entry</button>
+    </div>
+
+    <div class="card">
+      <h2>2. Room & Doctor Appointment Scheduler</h2>
+      <label>Assign Attending Practitioner:</label>
+      <input type="text" id="doctor" placeholder="Dr. Juan Dela Cruz" />
+      <label>Designated Hospital Ward / Room:</label>
+      <input type="text" id="ward" placeholder="Ward A - Room 102" />
+      <label>Allocation Date & Time:</label>
+      <input type="datetime-local" id="allocDate" />
+      <button onclick="saveRecord()">Lock Allocation Schedule</button>
+    </div>
+
+    <div class="card">
+      <h2>3. Automated Financial Billing Module</h2>
+      <label>Consultation Fee (₱):</label>
+      <input type="number" id="feeConsult" value="0" min="0" />
+      <label>Laboratory Screening Fees (₱):</label>
+      <input type="number" id="feeLab" value="0" min="0" />
+      <label>Pharmacy Medicine Costs (₱):</label>
+      <input type="number" id="feePharm" value="0" min="0" />
+      <label>Accommodation Room Charges (₱):</label>
+      <input type="number" id="feeRoom" value="0" min="0" />
+      <button onclick="calculateTotal()">Calculate Total Billing</button>
+      <div class="total-box" id="totalDisplay">Total Billing: ₱ 0.00</div>
+    </div>
+  </div>
+
+  <div class="archive">
+    <h2>📁 Archived Patient Database (<span id="fileCount">0</span>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Patient Name</th>
+          <th>Diagnosis</th>
+          <th>Doctor & Room</th>
+          <th>Date/Time</th>
+          <th>Total Bill</th>
+        </tr>
+      </thead>
+      <tbody id="archiveTable"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">System Layout Architecture: Flow Layout Framework Connected | MediFlow HMS MVP Build v6.5</div>
+
+  <script>
+    let currentTotal = 0;
+    function calculateTotal() {
+      const c = parseFloat(document.getElementById('feeConsult').value) || 0;
+      const l = parseFloat(document.getElementById('feeLab').value) || 0;
+      const p = parseFloat(document.getElementById('feePharm').value) || 0;
+      const r = parseFloat(document.getElementById('feeRoom').value) || 0;
+      currentTotal = c + l + p + r;
+      document.getElementById('totalDisplay').innerText = "Total Billing: ₱ " + currentTotal.toFixed(2);
+    }
+    function saveRecord() {
+      const name = document.getElementById('pName').value.trim();
+      if (!name) return alert("Please enter the Patient Full Name first.");
+      calculateTotal();
+      const record = {
+        name,
+        history: document.getElementById('pHistory').value.trim() || "N/A",
+        doctor: document.getElementById('doctor').value.trim() || "Unassigned",
+        ward: document.getElementById('ward').value.trim() || "N/A",
+        date: document.getElementById('allocDate').value || "Not set",
+        bill: "₱ " + currentTotal.toFixed(2)
+      };
+      const records = JSON.parse(localStorage.getItem('mediflow_records')) || [];
+      records.push(record);
+      localStorage.setItem('mediflow_records', JSON.stringify(records));
+      renderTable();
+      alert("Patient record saved!");
+    }
+    function renderTable() {
+      const records = JSON.parse(localStorage.getItem('mediflow_records')) || [];
+      document.getElementById('fileCount').innerText = records.length;
+      document.getElementById('archiveTable').innerHTML = records.map(r => `
+        <tr><td>${r.name}</td><td>${r.history}</td><td>${r.doctor} (${r.ward})</td><td>${r.date}</td><td>${r.bill}</td></tr>
+      `).join('');
+    }
+    renderTable();
+  </script>
+</body>
+</html>
