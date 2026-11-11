@@ -211,3 +211,57 @@
                         patientArchive[lastIndex].room = room;
                         patientArchive[lastIndex].time = time;
 
+                   <script>
+    let currentTotal = 0;
+
+    function calculateTotal() {
+      const c = parseFloat(document.getElementById('feeConsult').value) || 0;
+      const l = parseFloat(document.getElementById('feeLab').value) || 0;
+      const p = parseFloat(document.getElementById('feePharm').value) || 0;
+      const r = parseFloat(document.getElementById('feeRoom').value) || 0;
+      currentTotal = c + l + p + r;
+      document.getElementById('totalDisplay').innerText = "Total Billing: ₱ " + currentTotal.toFixed(2);
+    }
+
+    function saveRecord() {
+      const name = document.getElementById('pName').value.trim();
+      if (!name) {
+        alert("Please enter the Patient Full Name first.");
+        return;
+      }
+      calculateTotal();
+      const record = {
+        name: name,
+        history: document.getElementById('pHistory').value.trim() || "N/A",
+        doctor: document.getElementById('doctor').value.trim() || "Unassigned",
+        ward: document.getElementById('ward').value.trim() || "N/A",
+        date: document.getElementById('allocDate').value || "Not set",
+        bill: "₱ " + currentTotal.toFixed(2)
+      };
+      const records = JSON.parse(localStorage.getItem('mediflow_records')) || [];
+      records.push(record);
+      localStorage.setItem('mediflow_records', JSON.stringify(records));
+      renderTable();
+      alert("Patient record saved!");
+    }
+
+    function renderTable() {
+      const records = JSON.parse(localStorage.getItem('mediflow_records')) || [];
+      document.getElementById('fileCount').innerText = records.length;
+      document.getElementById('archiveTable').innerHTML = records.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.history}</td>
+          <td>${r.doctor} (${r.ward})</td>
+          <td>${r.date}</td>
+          <td>${r.bill}</td>
+        </tr>
+      `).join('');
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
+
+
