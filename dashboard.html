@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediFlow HMS - CSS Flow Layout Framework</title>
     <style>
         /* Base configuration for Flow Layout */
@@ -60,6 +61,17 @@
             color: #d35400;
             margin-top: 15px;
         }
+
+        /* CUSTOM MODAL POPUP STYLES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9b59b6; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .modal-table th, .modal-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        .modal-table th { background-color: #f8f9fa; color: #2c3e50; }
+        .btn-close { width: auto; background: #e74c3c; padding: 6px 14px; font-size: 13px; }
+        .btn-close:hover { background: #c0392b; }
+        .btn-del { width: auto; background: #e74c3c; padding: 4px 8px; font-size: 12px; }
 
         /* FOOTER STATUS LAYER */
         .app-footer { background-color: #34495e; color: #bdc3c7; padding: 10px 20px; font-size: 12px; border-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; box-shadow: 0 -2px 4px rgba(0,0,0,0.05); }
@@ -128,13 +140,12 @@
                     <button type="submit" style="background-color: #e67e22;">Calculate Grand Total Invoice</button>
                 </form>
                 
-                <!-- CHANGED DISPLAY TEXT readout label BELOW -->
                 <div class="total-display-box">
                     Calculate Total Billing: ₱<span id="Calculate Total Billing">0.00</span>
                 </div>
             </div>
 
-            <!-- 🗂️ CLICKABLE FILE / FOLDER TAB MODULE -->
+            <!-- CLICKABLE FILE / FOLDER TAB MODULE -->
             <div class="flow-card archive-file-tab" id="archiveFolderCard">
                 <span class="folder-icon">📁</span>
                 <h2 style="color:#9b59b6; margin-bottom:5px;">Archived Patient Database</h2>
@@ -152,109 +163,39 @@
 
     </div>
 
+    <!-- CUSTOM MODAL POPUP FOR ARCHIVED RECORDS -->
+    <div id="archiveModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 style="margin:0; color:#9b59b6;">📁 Archived Patient Log Files</h2>
+                <button type="button" class="btn-close" id="closeModalBtn">Close ✖</button>
+            </div>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Patient Name</th>
+                        <th>Diagnosis</th>
+                        <th>Doctor & Room</th>
+                        <th>Schedule</th>
+                        <th>Total Bill</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="modalTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- ==================== JAVA SCRIPT CORE ENGINE ==================== -->
+    <script>
+        let patientArchive = JSON.parse(localStorage.getItem('mediflowArchive')) || [];
 
-        <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            let patientArchive = JSON.parse(localStorage.getItem('mediflowArchive')) || [];
+        function updateArchiveCount() {
+            const countDisplay = document.getElementById('tabCountDisplay');
+            if (countDisplay) countDisplay.innerText = patientArchive.length;
+        }
 
-            function updateArchiveCount() {
-                const countDisplay = document.getElementById('tabCountDisplay');
-                if (countDisplay) countDisplay.innerText = patientArchive.length;
-            }
-            updateArchiveCount();
-
-            // CARD 1: Save Patient
-            const form1 = document.getElementById('formCard1');
-            if (form1) {
-                form1.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    const name = document.getElementById('pName').value.trim();
-                    const history = document.getElementById('pHistory').value.trim();
-
-                    patientArchive.push({
-                        name: name,
-                        history: history,
-                        doctor: 'Not Assigned',
-                        room: 'Not Assigned',
-                        time: 'Not Assigned',
-                        billing: 0
-                    });
-
-                    localStorage.setItem('mediflowArchive', JSON.stringify(patientArchive));
-                    updateArchiveCount();
-                    alert(`✅ Record Created Successfully!\n\nPatient "${name}" has been added to the database archive.`);
-                    form1.reset();
-                });
-            }
-
-            // CARD 2: Scheduler
-            const form2 = document.getElementById('formCard2');
-            if (form2) {
-                form2.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    if (patientArchive.length === 0) {
-                        alert("⚠️ Please save a Patient Admissions Record in Card 1 first!");
-                        return;
-                    }
-                    const doctor = document.getElementById('docName').value.trim();
-                    const room = document.getElementById('roomNum').value.trim();
-                    const time = document.getElementById('schedTime').value;
-
-                    let lastIndex = patientArchive.length - 1;
-                    patientArchive[lastIndex].doctor = doctor;
-                    patientArchive[lastIndex].room = room;
-                    patientArchive[lastIndex].time = time;
-
-                    localStorage.setItem('mediflowArchive', JSON.stringify(patientArchive));
-                    alert(`📅 Schedule Locked for ${patientArchive[lastIndex].name}!\nDoctor: ${doctor} | Room: ${room}`);
-                    form2.reset();
-                });
-            }
-
-            // CARD 3: Billing Calculator
-            const form3 = document.getElementById('formCard3');
-            if (form3) {
-                form3.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    const c = parseFloat(document.getElementById('feeConsult').value) || 0;
-                    const l = parseFloat(document.getElementById('feeLab').value) || 0;
-                    const m = parseFloat(document.getElementById('feeMed').value) || 0;
-                    const r = parseFloat(document.getElementById('feeRoom').value) || 0;
-                    const grandTotal = c + l + m + r;
-
-                    const displaySpan = document.getElementById('Calculate Total Billing');
-                    if (displaySpan) displaySpan.innerText = grandTotal.toFixed(2);
-
-                    if (patientArchive.length > 0) {
-                        let lastIndex = patientArchive.length - 1;
-                        patientArchive[lastIndex].billing = grandTotal;
-                        localStorage.setItem('mediflowArchive', JSON.stringify(patientArchive));
-                        alert(`💰 Grand Total ₱${grandTotal.toFixed(2)} saved to ${patientArchive[lastIndex].name}'s file!`);
-                    } else {
-                        alert(`💰 Grand Total Calculated: ₱${grandTotal.toFixed(2)}`);
-                    }
-                });
-            }
-
-            // CARD 4: Clickable Archived Patient Database Folder
-            const folderCard = document.getElementById('archiveFolderCard');
-            if (folderCard) {
-                folderCard.addEventListener('click', function() {
-                    if (patientArchive.length === 0) {
-                        alert("📁 Archived Patient Database is currently empty.");
-                        return;
-                    }
-                    let summary = "📁 ARCHIVED PATIENT LOG FILES:\n\n";
-                    patientArchive.forEach((p, idx) => {
-                        summary += `${idx + 1}. ${p.name} | Dx: ${p.history}\n   Dr: ${p.doctor} | Room: ${p.room} | Time: ${p.time}\n   Total Bill: ₱${Number(p.billing).toFixed(2)}\n\n`;
-                    });
-                    alert(summary);
-                });
-            }
-        });
-    </script>
-</body>
-</html>
-
-   
+        function renderArchiveModal() {
+            const tbody = document.getElementById('modalTableBody');
+            if (patientArchive.length === 0) {
