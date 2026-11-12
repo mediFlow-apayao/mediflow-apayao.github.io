@@ -7,28 +7,33 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #2c3e50; }
         .app-container { max-width: 1350px; margin: auto; }
-        .app-header { background-color: #2c3e50; color: white; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .app-header { background-color: #2c3e50; color: white; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .app-header h1 { margin: 0; font-size: 22px; }
         .app-header .user-badge { background-color: #34495e; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; border-left: 4px solid #3498db; }
         .flow-layout-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; margin-bottom: 25px; }
         .flow-card { background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.08); border-top: 5px solid #3498db; flex: 1 1 280px; box-sizing: border-box; }
         .flow-card.patient-card { border-top-color: #27ae60; }
         .flow-card.billing-card { border-top-color: #e67e22; }
-        .flow-card.archive-file-tab { border-top-color: #9b59b6; background-color: #fcf8ff; cursor: pointer; text-align: center; }
+        .flow-card.archive-file-tab { border-top-color: #9b59b6; background-color: #fcf8ff; cursor: pointer; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+        .flow-card.archive-file-tab:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); background-color: #f7edff; }
         .folder-icon { font-size: 50px; margin-bottom: 10px; display: block; }
         .flow-card h2 { font-size: 16px; margin-top: 0; margin-bottom: 15px; color: #2c3e50; }
         label { display: block; margin: 10px 0 4px; font-weight: bold; font-size: 13px; color: #34495e; }
-        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
-        button { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+        button { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold; transition: background 0.2s; }
+        button:hover { background-color: #219653; }
         .total-display-box { background-color: #fdf2e9; border: 2px dashed #e67e22; padding: 12px; border-radius: 6px; text-align: center; font-size: 16px; font-weight: bold; color: #d35400; margin-top: 15px; }
-        .status-msg { margin-top: 10px; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; text-align: center; background-color: #d4edda; color: #155724; }
+        .status-msg { margin-top: 10px; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; text-align: center; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-err { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; }
+        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9b59b6; padding-bottom: 10px; margin-bottom: 15px; }
         .modal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .modal-table th, .modal-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        .btn-close, .btn-del { width: auto; background: #e74c3c; padding: 6px 12px; font-size: 12px; }
-        .app-footer { background-color: #34495e; color: #bdc3c7; padding: 10px 20px; font-size: 12px; border-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; }
+        .modal-table th { background-color: #f8f9fa; color: #2c3e50; }
+        .btn-close { width: auto; background: #e74c3c; padding: 6px 14px; font-size: 13px; }
+        .btn-del { width: auto; background: #e74c3c; padding: 4px 8px; font-size: 12px; }
+        .app-footer { background-color: #34495e; color: #bdc3c7; padding: 10px 20px; font-size: 12px; border-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; box-shadow: 0 -2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -68,13 +73,13 @@
             <div class="flow-card billing-card">
                 <h2>3. Automated Financial Billing Module</h2>
                 <label>Consultation Fee (₱):</label>
-                <input type="number" id="feeConsult" value="0" min="0">
+                <input type="number" id="feeConsult" value="0" min="0" step="0.01">
                 <label>Laboratory Screening Fees (₱):</label>
-                <input type="number" id="feeLab" value="0" min="0">
+                <input type="number" id="feeLab" value="0" min="0" step="0.01">
                 <label>Pharmacy Medicine Costs (₱):</label>
-                <input type="number" id="feeMed" value="0" min="0">
+                <input type="number" id="feeMed" value="0" min="0" step="0.01">
                 <label>Accommodation Room Charges (₱):</label>
-                <input type="number" id="feeRoom" value="0" min="0">
+                <input type="number" id="feeRoom" value="0" min="0" step="0.01">
                 <button type="button" style="background-color: #e67e22;" onclick="calculateBilling()">Calculate Grand Total Invoice</button>
                 <div class="total-display-box">
                     Calculate Total Billing: ₱<span id="totalBillingAmount">0.00</span>
@@ -93,12 +98,12 @@
 
         <div class="app-footer">
             <div>System Layout Architecture: Flow Layout Framework Connected</div>
-            <div>Environment Version Status: MediFlow HMS MVP Build v6.5</div>
+            <div>Environment Version Status: MediFlow HMS MVP Build v6.5 (Billing Screen Pipeline Activated)</div>
         </div>
     </div>
 
     <!-- MODAL -->
-    <div id="archiveModal" class="modal-overlay">
+    <div id="archiveModal" class="modal-overlay" onclick="if(event.target===this) closeArchive()">
         <div class="modal-box">
             <div class="modal-header">
                 <h2 style="margin:0; color:#9b59b6;">📁 Archived Patient Log Files</h2>
@@ -123,6 +128,13 @@
 
     <script>
         var patientArchive = [];
+        try {
+            var savedData = localStorage.getItem('mediflowArchive');
+            if (savedData) patientArchive = JSON.parse(savedData);
+        } catch (e) {
+            patientArchive = [];
+        }
+
         var currentDraft = {
             name: '',
             history: '',
@@ -132,51 +144,25 @@
             totalBill: 0
         };
 
-        function showStatus(id, msg) {
+        function persistData() {
+            try {
+                localStorage.setItem('mediflowArchive', JSON.stringify(patientArchive));
+            } catch (e) {}
+        }
+
+        function showStatus(id, msg, isError) {
             var el = document.getElementById(id);
             el.innerText = msg;
+            el.className = isError ? 'status-msg status-err' : 'status-msg';
             el.style.display = 'block';
             setTimeout(function() { el.style.display = 'none'; }, 3500);
         }
 
         function syncArchive() {
             if (!currentDraft.name) return;
-            var found = false;
+            var updated = false;
             for (var i = 0; i < patientArchive.length; i++) {
                 if (patientArchive[i].name.toLowerCase() === currentDraft.name.toLowerCase()) {
                     patientArchive[i] = Object.assign({}, currentDraft);
-                    found = true;
+                    updated = true;
                     break;
-                }
-            }
-            if (!found) {
-                patientArchive.push(Object.assign({}, currentDraft));
-            }
-            document.getElementById('tabCountDisplay').innerText = patientArchive.length;
-        }
-
-        function saveAdmissions() {
-            var name = document.getElementById('pName').value.trim();
-            var hist = document.getElementById('pHistory').value.trim();
-            if (!name) {
-                alert('Please enter the Patient Full Name first.');
-                return;
-            }
-            currentDraft.name = name;
-            currentDraft.history = hist || 'No diagnostics entered';
-            syncArchive();
-            showStatus('msgCard1', '✔ Patient admission record saved!');
-        }
-
-        function saveSchedule() {
-            var doc = document.getElementById('docName').value.trim();
-            var room = document.getElementById('roomNum').value.trim();
-            var time = document.getElementById('schedTime').value;
-            currentDraft.doctor = doc || 'Unassigned';
-            currentDraft.room = room || 'N/A';
-            currentDraft.schedule = time ? time.replace('T', ' ') : 'Not Set';
-            syncArchive();
-            showStatus('msgCard2', '✔ Schedule locked & attached!');
-        }
-
-        function calculateBilling() {
