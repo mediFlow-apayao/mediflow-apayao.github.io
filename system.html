@@ -62,7 +62,7 @@
 <body>
   <div class="app-container">
     <div id="debugBanner">
-      <span id="dbStatusText">System Status: Initializing IndexedDB Database...</span>
+      <span id="dbStatusText">System Status: Initializing Index Database...</span>
       <span>Dev: Leinster Pogi</span>
     </div>
 
@@ -71,7 +71,7 @@
         <h1>MediFlow Hospital Management System (HMS)</h1>
       </div>
       <div class="header-actions">
-        <button id="btnOpenWizard" type="button" class="btn-wizard-launch">🪄 Launch Intake Wizard</button>
+        <button id="btnOpenWizard" type="button" class="btn-wizard-launch"> Launch Intake Wizard</button>
         <div class="user-badge">📍 Flora, Apayao Branch Terminal</div>
       </div>
     </div>
@@ -79,7 +79,7 @@
     <!-- Flow Layout Cards -->
     <div class="flow-layout-container">
       <div class="flow-card patient-card">
-        <h2>1. Patient Admissions Record</h2>
+        <h2>1. Patients Record</h2>
         <label>Patient Full Name:</label>
         <input type="text" id="pName" placeholder="e.g., Juan Dela Cruz">
         <label>Medical History / Diagnostics:</label>
@@ -116,8 +116,8 @@
       </div>
 
       <div id="folderCard" class="flow-card archive-file-tab">
-        <span class="folder-icon">🗄️</span>
-        <h2 style="color:#9b59b6; margin-bottom:5px;">IndexedDB Patient Database</h2>
+        <span class="folder-icon"></span>
+        <h2 style="color:#9b59b6; margin-bottom:5px;">Patient Database</h2>
         <p style="margin:0; font-size:12px; color:#7f8c8d;">Click to query, export, or manage stored patient records</p>
         <div style="margin-top:15px; font-weight:bold; font-size:14px; color:#9b59b6;">
           Stored DB Records: <span id="tabCountDisplay">0</span>
@@ -135,7 +135,7 @@
   <div id="archiveModal" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 style="margin:0; color:#9b59b6;">🗄️ MediFlow IndexedDB Records</h2>
+        <h2 style="margin:0; color:#9b59b6;">MediFlow Records</h2>
         <div>
           <button id="btnExportDB" type="button" class="btn-export">Export JSON</button>
           <button id="btnCloseModal" type="button" class="btn-close">Close ✖</button>
@@ -162,7 +162,7 @@
   <div id="wizardModal" class="modal-overlay">
     <div class="modal-box wizard-box">
       <div class="modal-header" style="border-bottom-color: #8e44ad;">
-        <h2 style="margin:0; color:#8e44ad;">🪄 New Patient Intake Wizard</h2>
+        <h2 style="margin:0; color:#8e44ad;"> New Patient Intake Wizard</h2>
         <button id="btnCloseWizard" type="button" class="btn-close">Cancel ✖</button>
       </div>
 
