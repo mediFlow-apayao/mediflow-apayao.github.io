@@ -62,6 +62,18 @@
             margin-top: 15px;
         }
 
+        /* STATUS FEEDBACK BOX */
+        .status-msg {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+        }
+        .status-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
         /* CUSTOM MODAL POPUP STYLES */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -101,6 +113,7 @@
                     <textarea id="pHistory" rows="4" required placeholder="Enter medical history logs..."></textarea>
                     
                     <button type="submit">Save File Entry</button>
+                    <div id="msgCard1" class="status-msg status-success"></div>
                 </form>
             </div>
 
@@ -118,6 +131,7 @@
                     <input type="datetime-local" id="schedTime" required>
 
                     <button type="submit" style="background-color: #3498db;">Lock Allocation Schedule</button>
+                    <div id="msgCard2" class="status-msg status-success"></div>
                 </form>
             </div>
 
@@ -126,23 +140,24 @@
                 <h2>3. Automated Financial Billing Module</h2>
                 <form id="formCard3">
                     <label>Consultation Fee (₱):</label>
-                    <input type="number" id="feeConsult" value="0" min="0" required>
+                    <input type="number" id="feeConsult" value="0" min="0" step="0.01" required>
 
                     <label>Laboratory Screening Fees (₱):</label>
-                    <input type="number" id="feeLab" value="0" min="0" required>
+                    <input type="number" id="feeLab" value="0" min="0" step="0.01" required>
 
                     <label>Pharmacy Medicine Costs (₱):</label>
-                    <input type="number" id="feeMed" value="0" min="0" required>
+                    <input type="number" id="feeMed" value="0" min="0" step="0.01" required>
 
                     <label>Accommodation Room Charges (₱):</label>
-                    <input type="number" id="feeRoom" value="0" min="0" required>
+                    <input type="number" id="feeRoom" value="0" min="0" step="0.01" required>
 
                     <button type="submit" style="background-color: #e67e22;">Calculate Grand Total Invoice</button>
                 </form>
                 
                 <div class="total-display-box">
-                    Calculate Total Billing: ₱<span id="Calculate Total Billing">0.00</span>
+                    Calculate Total Billing: ₱<span id="totalBillingAmount">0.00</span>
                 </div>
+                <div id="msgCard3" class="status-msg status-success"></div>
             </div>
 
             <!-- CLICKABLE FILE / FOLDER TAB MODULE -->
@@ -182,20 +197,3 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="modalTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ==================== JAVA SCRIPT CORE ENGINE ==================== -->
-    <script>
-        let patientArchive = JSON.parse(localStorage.getItem('mediflowArchive')) || [];
-
-        function updateArchiveCount() {
-            const countDisplay = document.getElementById('tabCountDisplay');
-            if (countDisplay) countDisplay.innerText = patientArchive.length;
-        }
-
-        function renderArchiveModal() {
-            const tbody = document.getElementById('modalTableBody');
-            if (patientArchive.length === 0) {
