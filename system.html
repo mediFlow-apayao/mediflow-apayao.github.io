@@ -34,15 +34,12 @@
     </style>
 </head>
 <body>
-
     <div class="app-container">
         <div id="debugBanner">System Status: Checking JavaScript...</div>
-
         <div class="app-header">
             <h1>MediFlow Hospital Management System (HMS)</h1>
             <div class="user-badge">🔒 Flora, Apayao Branch Terminal</div>
         </div>
-
         <div class="flow-layout-container">
             <div class="flow-card patient-card">
                 <h2>1. Patient Admissions Record</h2>
@@ -53,7 +50,6 @@
                 <button id="btnSave1" type="button">Save File Entry</button>
                 <div id="msgCard1" class="status-msg"></div>
             </div>
-
             <div class="flow-card">
                 <h2>2. Room & Doctor Appointment Scheduler</h2>
                 <label>Assign Attending Practitioner:</label>
@@ -65,7 +61,6 @@
                 <button id="btnSave2" type="button" style="background-color: #3498db;">Lock Allocation Schedule</button>
                 <div id="msgCard2" class="status-msg"></div>
             </div>
-
             <div class="flow-card billing-card">
                 <h2>3. Automated Financial Billing Module</h2>
                 <label>Consultation Fee (₱):</label>
@@ -77,12 +72,9 @@
                 <label>Accommodation Room Charges (₱):</label>
                 <input type="number" id="feeRoom" value="0" min="0">
                 <button id="btnCalc3" type="button" style="background-color: #e67e22;">Calculate Grand Total Invoice</button>
-                <div class="total-display-box">
-                    Calculate Total Billing: ₱<span id="totalBillingAmount">0.00</span>
-                </div>
+                <div class="total-display-box">Calculate Total Billing: ₱<span id="totalBillingAmount">0.00</span></div>
                 <div id="msgCard3" class="status-msg"></div>
             </div>
-
             <div id="folderCard" class="flow-card archive-file-tab">
                 <span class="folder-icon">📁</span>
                 <h2 style="color:#9b59b6; margin-bottom:5px;">Archived Patient Database</h2>
@@ -90,13 +82,11 @@
                 <div style="margin-top:15px; font-weight:bold; font-size:13px; color:#9b59b6;">Total Files: <span id="tabCountDisplay">0</span></div>
             </div>
         </div>
-
         <div class="app-footer">
             <div>System Layout Architecture: Flow Layout Framework Connected</div>
             <div>Environment Version Status: MediFlow HMS MVP Build v6.5</div>
         </div>
     </div>
-
     <div id="archiveModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -105,42 +95,19 @@
             </div>
             <table class="modal-table">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Patient Name</th>
-                        <th>Diagnosis</th>
-                        <th>Doctor & Room</th>
-                        <th>Schedule</th>
-                        <th>Total Bill</th>
-                        <th>Action</th>
-                    </tr>
+                    <tr><th>#</th><th>Patient Name</th><th>Diagnosis</th><th>Doctor & Room</th><th>Schedule</th><th>Total Bill</th><th>Action</th></tr>
                 </thead>
                 <tbody id="modalTableBody"></tbody>
             </table>
         </div>
     </div>
-
     <script>
-        window.onerror = function(msg, url, line) {
-            var b = document.getElementById("debugBanner");
-            if (b) {
-                b.style.background = "#7f1d1d";
-                b.style.color = "#fecaca";
-                b.innerHTML = "ERROR DETECTED (Line " + line + "): " + msg;
-            }
-        };
-
         var banner = document.getElementById("debugBanner");
-        banner.innerHTML = "System Status: JavaScript Active & Ready! (Click any button to test)";
+        banner.innerHTML = "System Status: JavaScript Active & Ready!";
         banner.style.color = "#4ade80";
 
         var patientArchive = [];
-        var draftName = "";
-        var draftHistory = "";
-        var draftDoctor = "Unassigned";
-        var draftRoom = "N/A";
-        var draftSchedule = "Not Set";
-        var draftBill = 0;
+        var draftName = "", draftHistory = "", draftDoctor = "Unassigned", draftRoom = "N/A", draftSchedule = "Not Set", draftBill = 0;
 
         function showStatus(id, msg, isError) {
             var el = document.getElementById(id);
@@ -151,31 +118,57 @@
 
         function syncArchive() {
             if (draftName === "") return;
-            var recordCopy = {
-                name: draftName,
-                history: draftHistory,
-                doctor: draftDoctor,
-                room: draftRoom,
-                schedule: draftSchedule,
-                totalBill: draftBill
-            };
-
+            var recordCopy = { name: draftName, history: draftHistory, doctor: draftDoctor, room: draftRoom, schedule: draftSchedule, totalBill: draftBill };
             var foundIndex = -1;
             for (var i = 0; i < patientArchive.length; i++) {
-                if (patientArchive[i].name.toLowerCase() === draftName.toLowerCase()) {
-                    foundIndex = i;
-                    break;
-                }
+                if (patientArchive[i].name.toLowerCase() === draftName.toLowerCase()) { foundIndex = i; break; }
             }
-
-            if (foundIndex > -1) {
-                patientArchive[foundIndex] = recordCopy;
-            } else {
-                patientArchive.push(recordCopy);
-            }
-
+            if (foundIndex > -1) { patientArchive[foundIndex] = recordCopy; } else { patientArchive.push(recordCopy); }
             document.getElementById("tabCountDisplay").innerHTML = patientArchive.length;
         }
 
         document.getElementById("btnSave1").onclick = function() {
             var nameVal = document.getElementById("pName").value;
+            if (nameVal === "") { showStatus("msgCard1", "✖ Enter Patient Full Name first.", true); return; }
+            draftName = nameVal;
+            draftHistory = document.getElementById("pHistory").value || "No diagnostics entered";
+            syncArchive();
+            showStatus("msgCard1", "✔ Saved: " + draftName, false);
+        };
+
+        document.getElementById("btnSave2").onclick = function() {
+            draftDoctor = document.getElementById("docName").value || "Unassigned";
+            draftRoom = document.getElementById("roomNum").value || "N/A";
+            draftSchedule = document.getElementById("schedTime").value || "Not Set";
+            syncArchive();
+            showStatus("msgCard2", "✔ Schedule locked!", false);
+        };
+
+        document.getElementById("btnCalc3").onclick = function() {
+            var total = (Number(document.getElementById("feeConsult").value) || 0) + (Number(document.getElementById("feeLab").value) || 0) + (Number(document.getElementById("feeMed").value) || 0) + (Number(document.getElementById("feeRoom").value) || 0);
+            draftBill = total;
+            document.getElementById("totalBillingAmount").innerHTML = total.toFixed(2);
+            syncArchive();
+            showStatus("msgCard3", "✔ Total Calculated: ₱" + total.toFixed(2), false);
+        };
+
+        function renderModal() {
+            var tbody = document.getElementById("modalTableBody");
+            var rowsHtml = "";
+            if (patientArchive.length === 0) {
+                rowsHtml = "<tr><td colspan='7' style='text-align:center; padding:20px;'>No records yet.</td></tr>";
+            } else {
+                for (var i = 0; i < patientArchive.length; i++) {
+                    var rec = patientArchive[i];
+                    rowsHtml += "<tr><td>" + (i + 1) + "</td><td><strong>" + rec.name + "</strong></td><td>" + rec.history + "</td><td>" + rec.doctor + " (Room: " + rec.room + ")</td><td>" + rec.schedule + "</td><td style='color:#d35400; font-weight:bold;'>₱" + rec.totalBill.toFixed(2) + "</td><td><button type='button' class='btn-del' onclick='deleteRec(" + i + ")'>Delete</button></td></tr>";
+                }
+            }
+            tbody.innerHTML = rowsHtml;
+        }
+
+        document.getElementById("folderCard").onclick = function() { renderModal(); document.getElementById("archiveModal").style.display = "flex"; };
+        document.getElementById("btnCloseModal").onclick = function() { document.getElementById("archiveModal").style.display = "none"; };
+        function deleteRec(index) { patientArchive.splice(index, 1); document.getElementById("tabCountDisplay").innerHTML = patientArchive.length; renderModal(); }
+    </script>
+</body>
+</html>
