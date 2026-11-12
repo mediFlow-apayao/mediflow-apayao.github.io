@@ -57,7 +57,7 @@
                 <label>Designated Hospital Ward / Room:</label>
                 <input type="text" id="roomNum" placeholder="Type bed, ward, or room code...">
                 <label>Allocation Date & Time:</label>
-                <input type="datetime-local" id="schedTime">
+                <input type="date time-local" id="sched Time">
                 <button id="btnSave2" type="button" style="background-color: #3498db;">Lock Allocation Schedule</button>
                 <div id="msgCard2" class="status-msg"></div>
             </div>
@@ -71,13 +71,13 @@
                 <input type="number" id="feeMed" value="0" min="0">
                 <label>Accommodation Room Charges (₱):</label>
                 <input type="number" id="feeRoom" value="0" min="0">
-                <button id="btnCalc3" type="button" style="background-color: #e67e22;">Calculate Grand Total Invoice</button>
+                <button id="btnCalc3" type="button" style="background-color: #e67e22;">Calculate Grand Total </button>
                 <div class="total-display-box">Calculate Total Billing: ₱<span id="totalBillingAmount">0.00</span></div>
                 <div id="msgCard3" class="status-msg"></div>
             </div>
             <div id="folderCard" class="flow-card archive-file-tab">
                 <span class="folder-icon"></span>
-                <h2 style="color:#9b59b6; margin-bottom:5px;">Archived Patient Database</h2>
+                <h2 style="color:#9b59b6; margin-bottom:5px;">📂Archived Patient Database</h2>
                 <p style="margin:0; font-size:12px; color:#7f8c8d;">Click to open and view previous patient log files</p>
                 <div style="margin-top:15px; font-weight:bold; font-size:13px; color:#9b59b6;">Total Files: <span id="tabCountDisplay">0</span></div>
             </div>
