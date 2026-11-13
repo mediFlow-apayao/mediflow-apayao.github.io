@@ -118,7 +118,7 @@
       </div>
     </div>
 
-    <div class="app-footer">
+        <div class="app-footer">
       <div>System Layout Architecture: Flow Layout + Dual Storage Engine</div>
       <div>Environment Version Status: MediFlow HMS v7.4 (Safe Mode)</div>
     </div>
@@ -165,3 +165,227 @@
       <div id="wizBodyContainer"></div>
       <div class="wizard-nav">
         <button type="button" id="btnWizPrev" class="btn-secondary" style="visibility:hidden;">← Back</button>
+        <button type="button" id="btnWizNext" style="background-color:#3498db;">Next Step →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var recordsList = [];
+    var db = null;
+    var currentDraftId = null;
+
+    function loadFallback() {
+      try {
+        var raw = localStorage.getItem("mediflow_records_v7");
+        if (raw) recordsList = JSON.parse(raw);
+      } catch (e) {
+        recordsList = [];
+      }
+      document.getElementById("tabCountDisplay").innerText = recordsList.length;
+    }
+
+    function saveFallback() {
+      try {
+        localStorage.setItem("mediflow_records_v7", JSON.stringify(recordsList));
+      } catch (e) {}
+      document.getElementById("tabCountDisplay").innerText = recordsList.length;
+    }
+
+    function initDatabase() {
+      var bannerText = document.getElementById("dbStatusText");
+      loadFallback();
+      bannerText.innerHTML = "System Status: Buttons, Database & Wizard Active!";
+      bannerText.style.color = "#4ade80";
+
+      try {
+        if (window.indexedDB) {
+          var request = window.indexedDB.open("MediFlowHMS_DB", 1);
+          request.onupgradeneeded = function(e) {
+            var database = e.target.result;
+            if (!database.objectStoreNames.contains("patients")) {
+              database.createObjectStore("patients", { keyPath: "id", autoIncrement: true });
+            }
+          };
+          request.onsuccess = function(e) {
+            db = e.target.result;
+            var tx = db.transaction(["patients"], "readonly");
+            var req = tx.objectStore("patients").getAll();
+            req.onsuccess = function() {
+              if (req.result && req.result.length > 0) {
+                recordsList = req.result;
+                saveFallback();
+              }
+            };
+          };
+        }
+      } catch (err) {}
+    }
+
+    function upsertRecord(record) {
+      if (!record.id) {
+        record.id = recordsList.length > 0 ? Math.max.apply(null, recordsList.map(function(r) { return r.id; })) + 1 : 1;
+        recordsList.push(record);
+      } else {
+        var idx = -1;
+        for (var i = 0; i < recordsList.length; i++) {
+          if (recordsList[i].id === record.id) { idx = i; break; }
+        }
+        if (idx > -1) recordsList[idx] = record;
+        else recordsList.push(record);
+      }
+      saveFallback();
+
+      try {
+        if (db) {
+          var tx = db.transaction(["patients"], "readwrite");
+          tx.objectStore("patients").put(record);
+        }
+      } catch (e) {}
+
+      return record.id;
+    }
+
+    function showStatus(id, msg, isError) {
+      var el = document.getElementById(id);
+      el.innerHTML = msg;
+      el.className = isError ? "status-msg status-err" : "status-msg";
+      el.style.display = "block";
+    }
+
+    function syncDashboardRecord() {
+      var nameVal = document.getElementById("pName").value.trim();
+      if (!nameVal) return false;
+
+      var total =
+        (Number(document.getElementById("feeConsult").value) || 0) +
+        (Number(document.getElementById("feeLab").value) || 0) +
+        (Number(document.getElementById("feeMed").value) || 0) +
+        (Number(document.getElementById("feeRoom").value) || 0);
+
+      var record = {
+        id: currentDraftId,
+        name: nameVal,
+        history: document.getElementById("pHistory").value.trim() || "No diagnostics entered",
+        doctor: document.getElementById("docName").value.trim() || "Unassigned",
+        room: document.getElementById("roomNum").value.trim() || "N/A",
+        schedule: document.getElementById("schedTime").value || "Not Set",
+        totalBill: total
+      };
+
+      currentDraftId = upsertRecord(record);
+      return true;
+    }
+
+    document.getElementById("btnSave1").onclick = function() {
+      currentDraftId = null;
+      if (syncDashboardRecord()) {
+        showStatus("msgCard1", "✔ Saved to Database!", false);
+      } else {
+        showStatus("msgCard1", "✖ Enter Patient Full Name first.", true);
+      }
+    };
+
+    document.getElementById("btnSave2").onclick = function() {
+      if (syncDashboardRecord()) {
+        showStatus("msgCard2", "✔ Schedule locked in DB!", false);
+      } else {
+        showStatus("msgCard2", "✖ Enter Patient Name in Card 1 first.", true);
+      }
+    };
+
+    document.getElementById("btnCalc3").onclick = function() {
+      var total =
+        (Number(document.getElementById("feeConsult").value) || 0) +
+        (Number(document.getElementById("feeLab").value) || 0) +
+        (Number(document.getElementById("feeMed").value) || 0) +
+        (Number(document.getElementById("feeRoom").value) || 0);
+      document.getElementById("totalBillingAmount").innerText = total.toFixed(2);
+
+      if (syncDashboardRecord()) {
+        showStatus("msgCard3", "✔ Bill synced to DB: ₱" + total.toFixed(2), false);
+      } else {
+        showStatus("msgCard3", "Calculated ₱" + total.toFixed(2) + " (Enter Patient Name to save)", true);
+      }
+    };
+
+    function renderModal() {
+      var tbody = document.getElementById("modalTableBody");
+      if (recordsList.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding:20px;'>Database is empty. Use the cards or Launch Wizard to add records.</td></tr>";
+        return;
+      }
+      var html = "";
+      for (var i = 0; i < recordsList.length; i++) {
+        var rec = recordsList[i];
+        html += "<tr>" +
+          "<td><strong>#" + rec.id + "</strong></td>" +
+          "<td><strong>" + rec.name + "</strong></td>" +
+          "<td>" + rec.history + "</td>" +
+          "<td>" + rec.doctor + " (Room: " + rec.room + ")</td>" +
+          "<td>" + rec.schedule + "</td>" +
+          "<td style='color:#d35400; font-weight:bold;'>₱" + Number(rec.totalBill).toFixed(2) + "</td>" +
+          "<td><button type='button' class='btn-del' onclick='handleDelete(" + rec.id + ")'>Delete</button></td>" +
+          "</tr>";
+      }
+      tbody.innerHTML = html;
+    }
+
+    window.handleDelete = function(id) {
+      recordsList = recordsList.filter(function(r) { return r.id !== id; });
+      saveFallback();
+      try {
+        if (db) {
+          var tx = db.transaction(["patients"], "readwrite");
+          tx.objectStore("patients").delete(id);
+        }
+      } catch (e) {}
+      renderModal();
+    };
+
+    document.getElementById("folderCard").onclick = function() {
+      renderModal();
+      document.getElementById("archiveModal").style.display = "flex";
+    };
+
+    document.getElementById("btnCloseModal").onclick = function() {
+      document.getElementById("archiveModal").style.display = "none";
+    };
+
+    document.getElementById("btnExportDB").onclick = function() {
+      var blob = new Blob([JSON.stringify(recordsList, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "MediFlow_DB_Backup.json";
+      a.click();
+    };
+
+    var currentStep = 1;
+    var wizData = { name: "", history: "", doctor: "", room: "", schedule: "", consult: 0, lab: 0, med: 0, roomFee: 0 };
+
+    function saveCurrentWizStep() {
+      if (currentStep === 1) {
+        wizData.name = document.getElementById("wName").value.trim();
+        wizData.history = document.getElementById("wHistory").value.trim();
+      } else if (currentStep === 2) {
+        wizData.doctor = document.getElementById("wDoc").value.trim();
+        wizData.room = document.getElementById("wRoom").value.trim();
+        wizData.schedule = document.getElementById("wTime").value;
+      } else if (currentStep === 3) {
+        wizData.consult = Number(document.getElementById("wConsult").value) || 0;
+        wizData.lab = Number(document.getElementById("wLab").value) || 0;
+        wizData.med = Number(document.getElementById("wMed").value) || 0;
+        wizData.roomFee = Number(document.getElementById("wRoomFee").value) || 0;
+      }
+    }
+
+    function renderWizardStep() {
+      for (var i = 1; i <= 4; i++) {
+        var pill = document.getElementById("pill" + i);
+        pill.className = "step-pill" + (i === currentStep ? " active" : (i < currentStep ? " done" : ""));
+      }
+
+
+
+    
