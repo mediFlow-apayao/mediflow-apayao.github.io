@@ -137,3 +137,14 @@ function getForm(id) {
 
 function save1() { var d = getForm(null); if (!d) return msg("m1", "✖ Enter Patient Full Name first.", 1); draftId = upsert(d); msg("m1", "✔ Saved to Database!", 0); }
 function save2() { var d = getForm(draftId); if (!d) return msg("m2", "✖ Enter Patient Name in Card 1 first.", 1); draftId = upsert(d); msg("m2", "✔ Schedule locked in DB!", 0); }
+  function wNav(dir) {
+  if (step===1) { w.name = document.getElementById("wn").value.trim(); w.hist = document.getElementById("wh").value.trim(); if (dir>0 && !w.name) return msg("we","✖ Enter Patient Name first.",1); }
+  if (step===2) { w.doc = document.getElementById("wd").value.trim(); w.room = document.getElementById("wr").value.trim(); w.time = document.getElementById("wt").value; }
+  if (step===3) { w.c = +document.getElementById("wc").value||0; w.l = +document.getElementById("wl").value||0; w.m = +document.getElementById("wm").value||0; w.r = +document.getElementById("wf").value||0; }
+  if (step===4 && dir>0) { upsert({name:w.name, hist:w.hist||"None", doc:w.doc||"Unassigned", room:w.room||"N/A", time:w.time||"Not Set", bill:w.c+w.l+w.m+w.r}); closeM("wizModal"); openDB(); return; }
+  step += dir; drawWiz();
+}
+</script>
+</body>
+</html>
+
