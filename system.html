@@ -30,15 +30,15 @@
 </head>
 <body>
 <div class="app">
-  <div id="banner"><span id="st">System Status: Intake Wizard & Database Ready!</span><span>Flora, Apayao Terminal</span></div>
+  <div id="banner"><span id="st">System Status:Database Ready!</span><span>Flora, Apayao Terminal</span></div>
   <div class="hdr">
-    <h1>MediFlow HMS — Patient Intake Wizard</h1>
-    <button type="button" class="btn-db" onclick="openDB()">🗄️ View Database (<span id="cnt">0</span>)</button>
+    <h1>MediFlow HMS — Patient Intake</h1>
+    <button type="button" class="btn-db" onclick="openDB()">View Database (<span id="cnt">0</span>)</button>
   </div>
 
   <div class="wiz-card">
     <div class="steps">
-      <div class="step act" id="s1">1. Patient Info</div>
+      <div class="step act" id="s1">1. Patient Information</div>
       <div class="step" id="s2">2. Doctor & Room</div>
       <div class="step" id="s3">3. Billing</div>
       <div class="step" id="s4">4. Review & Save</div>
@@ -55,9 +55,9 @@
 <div id="dbModal" class="modal">
   <div class="mbox">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h2 style="margin:0;color:#8e44ad;">🗄️ Stored Patient Records</h2>
+      <h2 style="margin:0;color:#8e44ad;">Stored Patient Records</h2>
       <div>
-        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportDB()">Export JSON</button>
+        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportDB()">Export</button>
         <button type="button" class="btn" style="background:#e74c3c;padding:6px 12px;font-size:12px;" onclick="document.getElementById('dbModal').style.display='none'">Close ✖</button>
       </div>
     </div>
@@ -121,7 +121,7 @@ function render() {
 
   document.getElementById("btnBack").style.visibility = step === 1 ? "hidden" : "visible";
   var next = document.getElementById("btnNext");
-  next.innerText = step === 4 ? "✔ Save Record to Database" : "Next Step →";
+  next.innerText = step === 4 ? "Save Record to Database" : "Next Step →";
   next.style.background = step === 4 ? "#27ae60" : "#3498db";
 }
 
