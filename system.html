@@ -1,41 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediFlow HMS - Patient Intake Wizard</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f6f9; color: #2c3e50; }
-  .app { max-width: 850px; margin: auto; }
-  #banner { background: #1e293b; color: #4ade80; padding: 10px 16px; border-radius: 6px; margin-bottom: 15px; font-family: monospace; font-size: 13px; border-left: 5px solid #4ade80; display: flex; justify-content: space-between; }
-  .hdr { background: #2c3e50; color: #fff; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-  .hdr h1 { margin: 0; font-size: 20px; }
-  .btn-db { background: #8e44ad; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
-  .wiz-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.08); border-top: 5px solid #3498db; }
-  .steps { display: flex; gap: 8px; margin-bottom: 20px; background: #f1f5f9; padding: 8px; border-radius: 6px; }
-  .step { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; border-radius: 4px; color: #64748b; }
-  .step.act { background: #3498db; color: #fff; }
-  .step.done { background: #27ae60; color: #fff; }
-  label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 13px; }
-  input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-  .nav { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
-  .btn { padding: 10px 20px; border: none; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; }
-  .err { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 12px; display: none; }
-  .review { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; line-height: 1.7; font-size: 14px; }
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 999; justify-content: center; align-items: center; }
-  .mbox { background: #fff; padding: 25px; border-radius: 8px; width: 92%; max-width: 850px; max-height: 85vh; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
-  th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediFlow HMS - Patient Intake Wizard (SQL)</title>
+  <script src="https://cloudflare.com"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f6f9; color: #2c3e50; }
+    .app { max-width: 850px; margin: auto; }
+    #banner { background: #1e293b; color: #4ade80; padding: 10px 16px; border-radius: 6px; margin-bottom: 15px; font-family: monospace; font-size: 13px; border-left: 5px solid #4ade80; display: flex; justify-content: space-between; }
+    .hdr { background: #2c3e50; color: #fff; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .hdr h1 { margin: 0; font-size: 20px; }
+    .btn-db { background: #8e44ad; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    .wiz-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.08); border-top: 5px solid #3498db; }
+    .steps { display: flex; gap: 8px; margin-bottom: 20px; background: #f1f5f9; padding: 8px; border-radius: 6px; }
+    .step { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; border-radius: 4px; color: #64748b; }
+    .step.act { background: #3498db; color: #fff; }
+    .step.done { background: #27ae60; color: #fff; }
+    label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 13px; }
+    input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+    .nav { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .err { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 12px; display: none; }
+    .review { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; line-height: 1.7; font-size: 14px; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 999; justify-content: center; align-items: center; }
+    .mbox { background: #fff; padding: 25px; border-radius: 8px; width: 92%; max-width: 850px; max-height: 85vh; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+  </style>
 </head>
 <body>
 <div class="app">
-  <div id="banner"><span id="st">System Status:Database Ready!</span><span>Zandrisel Pogss</span></div>
+  <div id="banner"><span id="st">System Status: Loading SQL Engine...</span><span>Zandrisel Pogss</span></div>
   <div class="hdr">
     <h1>MediFlow HMS — Patient Intake</h1>
-    <button type="button" class="btn-db" onclick="openDB()">View Database (<span id="cnt">0</span>)</button>
+    <button type="button" class="btn-db" onclick="openDB()">View SQL Database (<span id="cnt">0</span>)</button>
   </div>
-
   <div class="wiz-card">
     <div class="steps">
       <div class="step act" id="s1">1. Patient Information</div>
@@ -54,10 +54,12 @@
 
 <div id="dbModal" class="modal">
   <div class="mbox">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h2 style="margin:0;color:#8e44ad;">Stored Patient Records</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <h2 style="margin:0;color:#8e44ad;">SQL Database Records</h2>
       <div>
-        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportDB()">Export</button>
+        <input type="file" id="importFile" accept=".sqlite,.db" style="display:none;" onchange="importSQL(event)">
+        <button type="button" class="btn" style="background:#16a085;padding:6px 12px;font-size:12px;" onclick="document.getElementById('importFile').click()">Load .DB File</button>
+        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportSQL()">Backup .DB File</button>
         <button type="button" class="btn" style="background:#e74c3c;padding:6px 12px;font-size:12px;" onclick="document.getElementById('dbModal').style.display='none'">Close ✖</button>
       </div>
     </div>
@@ -67,131 +69,179 @@
     </table>
   </div>
 </div>
-
 <script>
-var step = 1;
-var data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
-var recs = JSON.parse(localStorage.getItem("mf_wiz_db") || "[]");
+  var step = 1;
+  var data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
+  var db = null;
+  var SQL = null;
 
-function updateCount() {
-  document.getElementById("cnt").innerText = recs.length;
-  localStorage.setItem("mf_wiz_db", JSON.stringify(recs));
-}
+  // Initialize SQL Engine & IndexedDB Persistence
+  async function initSQL() {
+    SQL = await initSqlJs({
+      locateFile: file => https://cloudflare.com{file}
+    });
 
-function render() {
-  document.getElementById("errBox").style.display = "none";
-  for (var i = 1; i <= 4; i++) {
-    var el = document.getElementById("s" + i);
-    el.className = "step" + (i === step ? " act" : (i < step ? " done" : ""));
+    const savedBytes = await loadFromIndexedDB();
+    if (savedBytes) {
+      db = new SQL.Database(new Uint8Array(savedBytes));
+    } else {
+      db = new SQL.Database();
+      db.run(`
+        CREATE TABLE IF NOT EXISTS patients (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          hist TEXT,
+          doc TEXT,
+          room TEXT,
+          time TEXT,
+          bill REAL
+        );
+      `);
+      await saveToIndexedDB();
+    }
+    document.getElementById("st").innerText = "System Status: SQL Database Ready!";
+    updateCount();
   }
 
-  var box = document.getElementById("wizBody");
-  if (step === 1) {
-    box.innerHTML =
-      "<label>Patient Full Name *</label>" +
-      "<input id='inName' value='" + data.name + "' placeholder='e.g., Juan Dela Cruz'>" +
-      "<label>Medical History / Diagnostics</label>" +
-      "<textarea id='inHist' rows='4' placeholder='Enter symptoms, vitals, or diagnosis...'>" + data.hist + "</textarea>";
-  } else if (step === 2) {
-    box.innerHTML =
-      "<label>Attending Doctor</label>" +
-      "<input id='inDoc' value='" + data.doc + "' placeholder='e.g., Dr. Maria Santos'>" +
-      "<label>Hospital Ward / Room</label>" +
-      "<input id='inRoom' value='" + data.room + "' placeholder='e.g., Ward A - Bed 3'>" +
-      "<label>Schedule Date & Time</label>" +
-      "<input type='datetime-local' id='inTime' value='" + data.time + "'>";
-  } else if (step === 3) {
-    box.innerHTML =
-      "<label>Consultation Fee (₱)</label><input type='number' id='inC' value='" + data.c + "' min='0'>" +
-      "<label>Laboratory Screening Fee (₱)</label><input type='number' id='inL' value='" + data.l + "' min='0'>" +
-      "<label>Pharmacy Medicine Cost (₱)</label><input type='number' id='inM' value='" + data.m + "' min='0'>" +
-      "<label>Room Charges (₱)</label><input type='number' id='inR' value='" + data.r + "' min='0'>";
-  } else if (step === 4) {
-    var total = data.c + data.l + data.m + data.r;
-    box.innerHTML =
-      "<div class='review'>" +
-      "<strong>Patient Name:</strong> " + data.name + "<br>" +
-      "<strong>Diagnostics:</strong> " + (data.hist || "None") + "<br>" +
-      "<strong>Attending Doctor:</strong> " + (data.doc || "Unassigned") + "<br>" +
-      "<strong>Ward / Room:</strong> " + (data.room || "N/A") + "<br>" +
-      "<strong>Schedule:</strong> " + (data.time || "Not Set") + "<br><hr>" +
-      "<strong style='color:#d35400;font-size:16px;'>Grand Total Bill: ₱" + total.toFixed(2) + "</strong>" +
-      "</div>";
+  // Save binary SQL database to browser IndexedDB (survives normal history clear)
+  function saveToIndexedDB() {
+    return new Promise((resolve) => {
+      const binaryArray = db.export();
+      const request = indexedDB.open("MediFlowSQL_Storage", 1);
+      request.onupgradeneeded = (e) => e.target.result.createObjectStore("dbStore");
+      request.onsuccess = (e) => {
+        const idb = e.target.result;
+        const tx = idb.transaction("dbStore", "readwrite");
+        tx.objectStore("dbStore").put(binaryArray, "mediflow_db");
+        tx.oncomplete = () => resolve();
+      };
+    });
   }
 
-  document.getElementById("btnBack").style.visibility = step === 1 ? "hidden" : "visible";
-  var next = document.getElementById("btnNext");
-  next.innerText = step === 4 ? "Save Record to Database" : "Next Step →";
-  next.style.background = step === 4 ? "#27ae60" : "#3498db";
-}
+  function loadFromIndexedDB() {
+    return new Promise((resolve) => {
+      const request = indexedDB.open("MediFlowSQL_Storage", 1);
+      request.onupgradeneeded = (e) => e.target.result.createObjectStore("dbStore");
+      request.onsuccess = (e) => {
+        const idb = e.target.result;
+        const tx = idb.transaction("dbStore", "readonly");
+        const getReq = tx.objectStore("dbStore").get("mediflow_db");
+        getReq.onsuccess = () => resolve(getReq.result || null);
+      };
+    });
+  }
 
-function move(dir) {
-  if (step === 1) {
-    data.name = document.getElementById("inName").value.trim();
-    data.hist = document.getElementById("inHist").value.trim();
-    if (dir > 0 && !data.name) {
-      var err = document.getElementById("errBox");
-      err.innerText = "✖ Please enter the Patient Full Name before moving to Step 2.";
-      err.style.display = "block";
+  function updateCount() {
+    const res = db.exec("SELECT COUNT(*) FROM patients");
+    const count = res.length ? res[0].values[0][0] : 0;
+    document.getElementById("cnt").innerText = count;
+  }
+
+  function render() {
+    document.getElementById("errBox").style.display = "none";
+    for (var i = 1; i <= 4; i++) {
+      var el = document.getElementById("s" + i);
+      el.className = "step" + (i === step ? " act" : (i < step ? " done" : ""));
+    }
+    var box = document.getElementById("wizBody");
+    if (step === 1) {
+      box.innerHTML = "<label>Patient Full Name *</label><input id='inName' value='" + data.name + "' placeholder='e.g., Juan Dela Cruz'><label>Medical History / Diagnostics</label><textarea id='inHist' rows='4' placeholder='Enter symptoms, vitals, or diagnosis...'>" + data.hist + "</textarea>";
+    } else if (step === 2) {
+      box.innerHTML = "<label>Attending Doctor</label><input id='inDoc' value='" + data.doc + "' placeholder='e.g., Dr. Maria Santos'><label>Hospital Ward / Room</label><input id='inRoom' value='" + data.room + "' placeholder='e.g., Ward A - Bed 3'><label>Schedule Date & Time</label><input type='datetime-local' id='inTime' value='" + data.time + "'>";
+    } else if (step === 3) {
+      box.innerHTML = "<label>Consultation Fee (₱)</label><input type='number' id='inC' value='" + data.c + "' min='0'><label>Laboratory Screening Fee (₱)</label><input type='number' id='inL' value='" + data.l + "' min='0'><label>Pharmacy Medicine Cost (₱)</label><input type='number' id='inM' value='" + data.m + "' min='0'><label>Room Charges (₱)</label><input type='number' id='inR' value='" + data.r + "' min='0'>";
+    } else if (step === 4) {
+      var total = data.c + data.l + data.m + data.r;
+      box.innerHTML = "<div class='review'><strong>Patient Name:</strong> " + data.name + "<br><strong>Diagnostics:</strong> " + (data.hist || "None") + "<br><strong>Attending Doctor:</strong> " + (data.doc || "Unassigned") + "<br><strong>Ward / Room:</strong> " + (data.room || "N/A") + "<br><strong>Schedule:</strong> " + (data.time || "Not Set") + "<br><hr><strong style='color:#d35400;font-size:16px;'>Grand Total Bill: ₱" + total.toFixed(2) + "</strong></div>";
+    }
+    document.getElementById("btnBack").style.visibility = step === 1 ? "hidden" : "visible";
+    var next = document.getElementById("btnNext");
+    next.innerText = step === 4 ? "Save Record to SQL" : "Next Step →";
+    next.style.background = step === 4 ? "#27ae60" : "#3498db";
+  }
+
+  async function move(dir) {
+    if (step === 1) {
+      data.name = document.getElementById("inName").value.trim();
+      data.hist = document.getElementById("inHist").value.trim();
+      if (dir > 0 && !data.name) {
+        var err = document.getElementById("errBox");
+        err.innerText = "✖ Please enter the Patient Full Name before moving to Step 2.";
+        err.style.display = "block";
+        return;
+      }
+    } else if (step === 2) {
+      data.doc = document.getElementById("inDoc").value.trim();
+      data.room = document.getElementById("inRoom").value.trim();
+      data.time = document.getElementById("inTime").value;
+    } else if (step === 3) {
+      data.c = Number(document.getElementById("inC").value) || 0;
+      data.l = Number(document.getElementById("inL").value) || 0;
+      data.m = Number(document.getElementById("inM").value) || 0;
+      data.r = Number(document.getElementById("inR").value) || 0;
+    } else if (step === 4 && dir > 0) {
+      db.run(
+        "INSERT INTO patients (name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?)",
+        [data.name, data.hist || "None", data.doc || "Unassigned", data.room || "N/A", data.time || "Not Set", data.c + data.l + data.m + data.r]
+      );
+      await saveToIndexedDB();
+      updateCount();
+      data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
+      step = 1;
+      render();
+      openDB();
       return;
     }
-  } else if (step === 2) {
-    data.doc = document.getElementById("inDoc").value.trim();
-    data.room = document.getElementById("inRoom").value.trim();
-    data.time = document.getElementById("inTime").value;
-  } else if (step === 3) {
-    data.c = Number(document.getElementById("inC").value) || 0;
-    data.l = Number(document.getElementById("inL").value) || 0;
-    data.m = Number(document.getElementById("inM").value) || 0;
-    data.r = Number(document.getElementById("inR").value) || 0;
-  } else if (step === 4 && dir > 0) {
-    var newId = recs.length ? Math.max.apply(null, recs.map(function(x){ return x.id; })) + 1 : 1;
-    recs.push({
-      id: newId,
-      name: data.name,
-      hist: data.hist || "None",
-      doc: data.doc || "Unassigned",
-      room: data.room || "N/A",
-      time: data.time || "Not Set",
-      bill: data.c + data.l + data.m + data.r
-    });
-    updateCount();
-    data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
-    step = 1;
+    step += dir;
     render();
+  }
+
+  function openDB() {
+    const res = db.exec("SELECT * FROM patients ORDER BY id DESC");
+    var rows = "";
+    if (res.length) {
+      const values = res[0].values;
+      for (var i = 0; i < values.length; i++) {
+        var x = values[i];
+        rows += "<tr><td><b>#" + x[0] + "</b></td><td><b>" + x[1] + "</b></td><td>" + x[2] + "</td><td>" + x[3] + " (" + x[4] + ")</td><td>" + x[5] + "</td><td style='color:#d35400;font-weight:bold;'>₱" + Number(x[6]).toFixed(2) + "</td><td><button type='button' class='btn' style='background:#e74c3c;padding:4px 8px;font-size:12px;' onclick='delRec(" + x[0] + ")'>Delete</button></td></tr>";
+      }
+    }
+    document.getElementById("tb").innerHTML = rows || "<tr><td colspan='7' style='text-align:center;padding:20px;'>No records saved yet.</td></tr>";
+    document.getElementById("dbModal").style.display = "flex";
+  }
+
+  async function delRec(id) {
+    if (!confirm("Delete record #" + id + " from SQL?")) return;
+    db.run("DELETE FROM patients WHERE id = ?", [id]);
+    await saveToIndexedDB();
+    updateCount();
     openDB();
-    return;
   }
 
-  step += dir;
+  function exportSQL() {
+    const binaryArray = db.export();
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([binaryArray], { type: "application/x-sqlite3" }));
+    a.download = "MediFlow_SQL_Database.db";
+    a.click();
+  }
+
+  function importSQL(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function() {
+      db = new SQL.Database(new Uint8Array(reader.result));
+      await saveToIndexedDB();
+      updateCount();
+      openDB();
+      alert("SQL Database loaded successfully!");
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  initSQL();
   render();
-}
-
-function openDB() {
-  var rows = "";
-  for (var i = 0; i < recs.length; i++) {
-    var x = recs[i];
-    rows += "<tr><td><b>#" + x.id + "</b></td><td><b>" + x.name + "</b></td><td>" + x.hist + "</td><td>" + x.doc + " (" + x.room + ")</td><td>" + x.time + "</td><td style='color:#d35400;font-weight:bold;'>₱" + Number(x.bill).toFixed(2) + "</td><td><button type='button' class='btn' style='background:#e74c3c;padding:4px 8px;font-size:12px;' onclick='delRec(" + x.id + ")'>Delete</button></td></tr>";
-  }
-  document.getElementById("tb").innerHTML = rows || "<tr><td colspan='7' style='text-align:center;padding:20px;'>No records saved yet.</td></tr>";
-  document.getElementById("dbModal").style.display = "flex";
-}
-
-function delRec(id) {
-  recs = recs.filter(function(x){ return x.id !== id; });
-  updateCount();
-  openDB();
-}
-
-function exportDB() {
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(recs, null, 2)], { type: "application/json" }));
-  a.download = "MediFlow_Wizard_DB.json";
-  a.click();
-}
-
-updateCount();
-render();
 </script>
 </body>
 </html>
