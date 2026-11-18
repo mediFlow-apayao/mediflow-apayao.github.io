@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MediFlow HMS - Patient Intake Wizard (SQL)</title>
-  <script src="https://cloudflare.com"></script>
+  <title>MediFlow HMS - Patient Intake Wizard</title>
+  <script src="https://jsdelivr.net"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f6f9; color: #2c3e50; }
     .app { max-width: 850px; margin: auto; }
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="app">
-  <div id="banner"><span id="st">System Status: Loading SQL Engine...</span><span>Zandrisel Pogss</span></div>
+  <div id="banner"><span id="st">System Status: SQL Database Ready!</span><span>Zandrisel Pogss</span></div>
   <div class="hdr">
     <h1>MediFlow HMS — Patient Intake</h1>
     <button type="button" class="btn-db" onclick="openDB()">View SQL Database (<span id="cnt">0</span>)</button>
@@ -57,9 +57,9 @@
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <h2 style="margin:0;color:#8e44ad;">SQL Database Records</h2>
       <div>
-        <input type="file" id="importFile" accept=".sqlite,.db" style="display:none;" onchange="importSQL(event)">
-        <button type="button" class="btn" style="background:#16a085;padding:6px 12px;font-size:12px;" onclick="document.getElementById('importFile').click()">Load .DB File</button>
-        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportSQL()">Backup .DB File</button>
+        <input type="file" id="importFile" accept=".sql" style="display:none;" onchange="importSQL(event)">
+        <button type="button" class="btn" style="background:#16a085;padding:6px 12px;font-size:12px;" onclick="document.getElementById('importFile').click()">Import .SQL</button>
+        <button type="button" class="btn" style="background:#2980b9;padding:6px 12px;font-size:12px;" onclick="exportSQL()">Export .SQL</button>
         <button type="button" class="btn" style="background:#e74c3c;padding:6px 12px;font-size:12px;" onclick="document.getElementById('dbModal').style.display='none'">Close ✖</button>
       </div>
     </div>
@@ -72,68 +72,13 @@
 <script>
   var step = 1;
   var data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
-  var db = null;
-  var SQL = null;
 
-  // Ipakita agad ang form bago pa mag-load ang SQL
-  render();
-
-  async function initSQL() {
-    try {
-      SQL = await initSqlJs({
-        locateFile: function(file) {
-          return "https://cloudflare.com" + file;
-        }
-      });
-
-      const savedBytes = await loadFromIndexedDB();
-      if (savedBytes) {
-        db = new SQL.Database(new Uint8Array(savedBytes));
-      } else {
-        db = new SQL.Database();
-        db.run("CREATE TABLE IF NOT EXISTS patients (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, hist TEXT, doc TEXT, room TEXT, time TEXT, bill REAL);");
-        await saveToIndexedDB();
-      }
-      document.getElementById("st").innerText = "System Status: SQL Database Ready!";
-      updateCount();
-    } catch (err) {
-      document.getElementById("st").innerText = "System Status: SQL Error - " + err.message;
-      document.getElementById("st").style.color = "#f87171";
-    }
-  }
-
-  function saveToIndexedDB() {
-    return new Promise(function(resolve) {
-      const binaryArray = db.export();
-      const request = indexedDB.open("MediFlowSQL_Storage", 1);
-      request.onupgradeneeded = function(e) { e.target.result.createObjectStore("dbStore"); };
-      request.onsuccess = function(e) {
-        const idb = e.target.result;
-        const tx = idb.transaction("dbStore", "readwrite");
-        tx.objectStore("dbStore").put(binaryArray, "mediflow_db");
-        tx.oncomplete = function() { resolve(); };
-      };
-    });
-  }
-
-  function loadFromIndexedDB() {
-    return new Promise(function(resolve) {
-      const request = indexedDB.open("MediFlowSQL_Storage", 1);
-      request.onupgradeneeded = function(e) { e.target.result.createObjectStore("dbStore"); };
-      request.onsuccess = function(e) {
-        const idb = e.target.result;
-        const tx = idb.transaction("dbStore", "readonly");
-        const getReq = tx.objectStore("dbStore").get("mediflow_db");
-        getReq.onsuccess = function() { resolve(getReq.result || null); };
-      };
-    });
-  }
+  alasql("CREATE INDEXEDDB DATABASE IF NOT EXISTS mediflow_sql; ATTACH INDEXEDDB DATABASE mediflow_sql; USE mediflow_sql;");
+  alasql("CREATE TABLE IF NOT EXISTS patients (id INT AUTO_INCREMENT PRIMARY KEY, name STRING, hist STRING, doc STRING, room STRING, time STRING, bill NUMBER)");
 
   function updateCount() {
-    if (!db) return;
-    const res = db.exec("SELECT COUNT(*) FROM patients");
-    const count = (res.length && res[0].values.length) ? res[0].values[0][0] : 0;
-    document.getElementById("cnt").innerText = count;
+    var rows = alasql("SELECT * FROM patients");
+    document.getElementById("cnt").innerText = rows.length;
   }
 
   function render() {
@@ -159,7 +104,7 @@
     next.style.background = step === 4 ? "#27ae60" : "#3498db";
   }
 
-  async function move(dir) {
+  function move(dir) {
     if (step === 1) {
       data.name = document.getElementById("inName").value.trim();
       data.hist = document.getElementById("inHist").value.trim();
@@ -179,12 +124,15 @@
       data.m = Number(document.getElementById("inM").value) || 0;
       data.r = Number(document.getElementById("inR").value) || 0;
     } else if (step === 4 && dir > 0) {
-      if (!db) { alert("Hintayin muna maging 'SQL Database Ready!' ang status sa itaas."); return; }
-      db.run(
-        "INSERT INTO patients (name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?)",
-        [data.name, data.hist || "None", data.doc || "Unassigned", data.room || "N/A", data.time || "Not Set", data.c + data.l + data.m + data.r]
-      );
-      await saveToIndexedDB();
+      var totalBill = data.c + data.l + data.m + data.r;
+      alasql("INSERT INTO patients (name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?)", [
+        data.name,
+        data.hist || "None",
+        data.doc || "Unassigned",
+        data.room || "N/A",
+        data.time || "Not Set",
+        totalBill
+      ]);
       updateCount();
       data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
       step = 1;
@@ -197,51 +145,54 @@
   }
 
   function openDB() {
-    if (!db) { alert("Loading pa ang SQL database."); return; }
-    const res = db.exec("SELECT * FROM patients ORDER BY id DESC");
+    var recs = alasql("SELECT * FROM patients ORDER BY id DESC");
     var rows = "";
-    if (res.length && res[0].values.length) {
-      const values = res[0].values;
-      for (var i = 0; i < values.length; i++) {
-        var x = values[i];
-        rows += "<tr><td><b>#" + x[0] + "</b></td><td><b>" + x[1] + "</b></td><td>" + x[2] + "</td><td>" + x[3] + " (" + x[4] + ")</td><td>" + x[5] + "</td><td style='color:#d35400;font-weight:bold;'>₱" + Number(x[6]).toFixed(2) + "</td><td><button type='button' class='btn' style='background:#e74c3c;padding:4px 8px;font-size:12px;' onclick='delRec(" + x[0] + ")'>Delete</button></td></tr>";
-      }
+    for (var i = 0; i < recs.length; i++) {
+      var x = recs[i];
+      rows += "<tr><td><b>#" + x.id + "</b></td><td><b>" + x.name + "</b></td><td>" + x.hist + "</td><td>" + x.doc + " (" + x.room + ")</td><td>" + x.time + "</td><td style='color:#d35400;font-weight:bold;'>₱" + Number(x.bill).toFixed(2) + "</td><td><button type='button' class='btn' style='background:#e74c3c;padding:4px 8px;font-size:12px;' onclick='delRec(" + x.id + ")'>Delete</button></td></tr>";
     }
     document.getElementById("tb").innerHTML = rows || "<tr><td colspan='7' style='text-align:center;padding:20px;'>No records saved yet.</td></tr>";
     document.getElementById("dbModal").style.display = "flex";
   }
 
-  async function delRec(id) {
+  function delRec(id) {
     if (!confirm("Delete record #" + id + " from SQL?")) return;
-    db.run("DELETE FROM patients WHERE id = ?", [id]);
-    await saveToIndexedDB();
+    alasql("DELETE FROM patients WHERE id = ?", [id]);
     updateCount();
     openDB();
   }
 
   function exportSQL() {
-    const binaryArray = db.export();
+    var recs = alasql("SELECT * FROM patients");
+    var sqlDump = "DELETE FROM patients;\n";
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i];
+      sqlDump += "INSERT INTO patients (id, name, hist, doc, room, time, bill) VALUES (" +
+        r.id + ", '" + r.name.replace(/'/g, "''") + "', '" + r.hist.replace(/'/g, "''") + "', '" +
+        r.doc.replace(/'/g, "''") + "', '" + r.room.replace(/'/g, "''") + "', '" + r.time + "', " + r.bill + ");\n";
+    }
     var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([binaryArray], { type: "application/x-sqlite3" }));
-    a.download = "MediFlow_SQL_Database.db";
+    a.href = URL.createObjectURL(new Blob([sqlDump], { type: "application/sql" }));
+    a.download = "MediFlow_SQL_Backup.sql";
     a.click();
   }
 
   function importSQL(event) {
-    const file = event.target.files[0];
+    var file = event.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function() {
-      db = new SQL.Database(new Uint8Array(reader.result));
-      await saveToIndexedDB();
+    var reader = new FileReader();
+    reader.onload = function() {
+      alasql(reader.result);
       updateCount();
       openDB();
-      alert("SQL Database loaded successfully!");
+      alert("SQL File imported successfully!");
     };
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file);
   }
 
-  initSQL();
+  setTimeout(updateCount, 300);
+  render();
 </script>
 </body>
 </html>
+
