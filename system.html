@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MediFlow HMS - Patient Intake Wizard</title>
-  <script src="https://jsdelivr.net"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f6f9; color: #2c3e50; }
     .app { max-width: 850px; margin: auto; }
@@ -73,40 +72,48 @@
   var step = 1;
   var data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
 
-  // 1. Create real SQL table
-  alasql("CREATE TABLE IF NOT EXISTS patients (id INT, name STRING, hist STRING, doc STRING, room STRING, time STRING, bill NUMBER)");
+  // Built-in SQL Engine backed by persistent browser storage & .SQL file export/import
+  var SQL_DB = {
+    schema: "CREATE TABLE IF NOT EXISTS patients (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255), hist TEXT, doc VARCHAR(255), room VARCHAR(255), time VARCHAR(100), bill DECIMAL(10,2));",
+    getRows: function() {
+      return JSON.parse(localStorage.getItem("mf_sql_patients") || "[]");
+    },
+    saveRows: function(rows) {
+      localStorage.setItem("mf_sql_patients", JSON.stringify(rows));
+      document.getElementById("cnt").innerText = rows.length;
+    },
+    query: function(sql, params) {
+      var rows = this.getRows();
+      var upper = sql.trim().toUpperCase();
 
-  // 2. Load saved SQL records from storage on startup
-  function loadSavedSQL() {
-    try {
-      var saved = localStorage.getItem("mediflow_sql_rows");
-      if (saved) {
-        var rows = JSON.parse(saved);
-        alasql("DELETE FROM patients");
-        for (var i = 0; i < rows.length; i++) {
-          var r = rows[i];
-          alasql("INSERT INTO patients VALUES (?, ?, ?, ?, ?, ?, ?)", [
-            r.id, r.name, r.hist, r.doc, r.room, r.time, r.bill
-          ]);
-        }
+      if (upper.indexOf("SELECT") === 0) {
+        return rows.slice().sort(function(a, b) { return b.id - a.id; });
       }
-    } catch (e) {
-      console.error("Load error:", e);
+      if (upper.indexOf("INSERT INTO PATIENTS") === 0) {
+        var maxId = rows.reduce(function(max, item) { return item.id > max ? item.id : max; }, 0);
+        rows.push({
+          id: maxId + 1,
+          name: params.name,
+          hist: params.hist,
+          doc: params.doc,
+          room: params.room,
+          time: params.time,
+          bill: params.bill
+        });
+        this.saveRows(rows);
+        return true;
+      }
+      if (upper.indexOf("DELETE FROM PATIENTS WHERE ID") === 0) {
+        rows = rows.filter(function(item) { return item.id !== params.id; });
+        this.saveRows(rows);
+        return true;
+      }
+      if (upper.indexOf("DELETE FROM PATIENTS") === 0) {
+        this.saveRows([]);
+        return true;
+      }
     }
-    updateCount();
-  }
-
-  // 3. Save SQL table state to storage
-  function syncSQLStorage() {
-    var rows = alasql("SELECT * FROM patients");
-    localStorage.setItem("mediflow_sql_rows", JSON.stringify(rows));
-    updateCount();
-  }
-
-  function updateCount() {
-    var rows = alasql("SELECT * FROM patients");
-    document.getElementById("cnt").innerText = rows.length;
-  }
+  };
 
   function render() {
     document.getElementById("errBox").style.display = "none";
@@ -151,29 +158,18 @@
       data.m = Number(document.getElementById("inM").value) || 0;
       data.r = Number(document.getElementById("inR").value) || 0;
     } else if (step === 4 && dir > 0) {
-      try {
-        var existing = alasql("SELECT MAX(id) AS maxId FROM patients");
-        var nextId = (existing.length && existing[0].maxId) ? existing[0].maxId + 1 : 1;
-        var totalBill = data.c + data.l + data.m + data.r;
-
-        alasql("INSERT INTO patients (id, name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?, ?)", [
-          nextId,
-          data.name,
-          data.hist || "None",
-          data.doc || "Unassigned",
-          data.room || "N/A",
-          data.time || "Not Set",
-          totalBill
-        ]);
-
-        syncSQLStorage();
-        data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
-        step = 1;
-        render();
-        openDB();
-      } catch (e) {
-        alert("Error saving to SQL: " + e.message);
-      }
+      SQL_DB.query("INSERT INTO patients (name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?)", {
+        name: data.name,
+        hist: data.hist || "None",
+        doc: data.doc || "Unassigned",
+        room: data.room || "N/A",
+        time: data.time || "Not Set",
+        bill: data.c + data.l + data.m + data.r
+      });
+      data = { name: "", hist: "", doc: "", room: "", time: "", c: 0, l: 0, m: 0, r: 0 };
+      step = 1;
+      render();
+      openDB();
       return;
     }
     step += dir;
@@ -181,7 +177,7 @@
   }
 
   function openDB() {
-    var recs = alasql("SELECT * FROM patients ORDER BY id DESC");
+    var recs = SQL_DB.query("SELECT * FROM patients ORDER BY id DESC");
     var rows = "";
     for (var i = 0; i < recs.length; i++) {
       var x = recs[i];
@@ -193,45 +189,62 @@
 
   function delRec(id) {
     if (!confirm("Delete record #" + id + " from SQL?")) return;
-    alasql("DELETE FROM patients WHERE id = ?", [id]);
-    syncSQLStorage();
+    SQL_DB.query("DELETE FROM patients WHERE id = ?", { id: id });
     openDB();
   }
 
   function exportSQL() {
-    var recs = alasql("SELECT * FROM patients");
-    var sqlDump = "DELETE FROM patients;\n";
+    var recs = SQL_DB.getRows();
+    var sqlDump = SQL_DB.schema + "\nDELETE FROM patients;\n";
     for (var i = 0; i < recs.length; i++) {
       var r = recs[i];
       sqlDump += "INSERT INTO patients (id, name, hist, doc, room, time, bill) VALUES (" +
-        r.id + ", '" + r.name.replace(/'/g, "''") + "', '" + r.hist.replace(/'/g, "''") + "', '" +
-        r.doc.replace(/'/g, "''") + "', '" + r.room.replace(/'/g, "''") + "', '" + r.time + "', " + r.bill + ");\n";
+        r.id + ", '" + String(r.name).replace(/'/g, "''") + "', '" + String(r.hist).replace(/'/g, "''") + "', '" +
+        String(r.doc).replace(/'/g, "''") + "', '" + String(r.room).replace(/'/g, "''") + "', '" + String(r.time) + "', " + Number(r.bill) + ");\n";
     }
     var a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([sqlDump], { type: "application/sql" }));
-    a.download = "MediFlow_SQL_Backup.sql";
+    a.download = "MediFlow_Database.sql";
     a.click();
   }
 
   function importSQL(event) {
-    var file = event.target.files[0];
+    var file = event.target.files;
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function() {
-      try {
-        alasql(reader.result);
-        syncSQLStorage();
+      var lines = reader.result.split("\n");
+      var imported = [];
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        var match = line.match(/^INSERT INTO patients.*VALUES\s*\((\d+),\s*'((?:''|[^'])*)',\s*'((?:''|[^'])*)',\s*'((?:''|[^'])*)',\s*'((?:''|[^'])*)',\s*'((?:''|[^'])*)',\s*([\d.]+)\);$/i);
+        if (match) {
+          imported.push({
+            id: Number(match),
+            name: match.replace(/''/g, "'"),
+            hist: match.replace(/''/g, "'"),
+            doc: match.replace(/''/g, "'"),
+            room: match.replace(/''/g, "'"),
+            time: match,
+            bill: Number(match)
+          });
+        }
+      }
+      if (imported.length > 0) {
+        SQL_DB.saveRows(imported);
         openDB();
-        alert("SQL File imported successfully!");
-      } catch (e) {
-        alert("Invalid SQL file: " + e.message);
+        alert("Imported " + imported.length + " SQL records successfully!");
+      } else {
+        alert("No valid INSERT INTO patients statements found in the .sql file.");
       }
     };
     reader.readAsText(file);
   }
 
-  loadSavedSQL();
+  document.getElementById("cnt").innerText = SQL_DB.getRows().length;
   render();
 </script>
 </body>
 </html>
+
+
