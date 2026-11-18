@@ -75,65 +75,64 @@
   var db = null;
   var SQL = null;
 
-  // Initialize SQL Engine & IndexedDB Persistence
-  async function initSQL() {
-    SQL = await initSqlJs({
-      locateFile: file => https://cloudflare.com{file}
-    });
+  // Ipakita agad ang form bago pa mag-load ang SQL
+  render();
 
-    const savedBytes = await loadFromIndexedDB();
-    if (savedBytes) {
-      db = new SQL.Database(new Uint8Array(savedBytes));
-    } else {
-      db = new SQL.Database();
-      db.run(`
-        CREATE TABLE IF NOT EXISTS patients (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          hist TEXT,
-          doc TEXT,
-          room TEXT,
-          time TEXT,
-          bill REAL
-        );
-      `);
-      await saveToIndexedDB();
+  async function initSQL() {
+    try {
+      SQL = await initSqlJs({
+        locateFile: function(file) {
+          return "https://cloudflare.com" + file;
+        }
+      });
+
+      const savedBytes = await loadFromIndexedDB();
+      if (savedBytes) {
+        db = new SQL.Database(new Uint8Array(savedBytes));
+      } else {
+        db = new SQL.Database();
+        db.run("CREATE TABLE IF NOT EXISTS patients (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, hist TEXT, doc TEXT, room TEXT, time TEXT, bill REAL);");
+        await saveToIndexedDB();
+      }
+      document.getElementById("st").innerText = "System Status: SQL Database Ready!";
+      updateCount();
+    } catch (err) {
+      document.getElementById("st").innerText = "System Status: SQL Error - " + err.message;
+      document.getElementById("st").style.color = "#f87171";
     }
-    document.getElementById("st").innerText = "System Status: SQL Database Ready!";
-    updateCount();
   }
 
-  // Save binary SQL database to browser IndexedDB (survives normal history clear)
   function saveToIndexedDB() {
-    return new Promise((resolve) => {
+    return new Promise(function(resolve) {
       const binaryArray = db.export();
       const request = indexedDB.open("MediFlowSQL_Storage", 1);
-      request.onupgradeneeded = (e) => e.target.result.createObjectStore("dbStore");
-      request.onsuccess = (e) => {
+      request.onupgradeneeded = function(e) { e.target.result.createObjectStore("dbStore"); };
+      request.onsuccess = function(e) {
         const idb = e.target.result;
         const tx = idb.transaction("dbStore", "readwrite");
         tx.objectStore("dbStore").put(binaryArray, "mediflow_db");
-        tx.oncomplete = () => resolve();
+        tx.oncomplete = function() { resolve(); };
       };
     });
   }
 
   function loadFromIndexedDB() {
-    return new Promise((resolve) => {
+    return new Promise(function(resolve) {
       const request = indexedDB.open("MediFlowSQL_Storage", 1);
-      request.onupgradeneeded = (e) => e.target.result.createObjectStore("dbStore");
-      request.onsuccess = (e) => {
+      request.onupgradeneeded = function(e) { e.target.result.createObjectStore("dbStore"); };
+      request.onsuccess = function(e) {
         const idb = e.target.result;
         const tx = idb.transaction("dbStore", "readonly");
         const getReq = tx.objectStore("dbStore").get("mediflow_db");
-        getReq.onsuccess = () => resolve(getReq.result || null);
+        getReq.onsuccess = function() { resolve(getReq.result || null); };
       };
     });
   }
 
   function updateCount() {
+    if (!db) return;
     const res = db.exec("SELECT COUNT(*) FROM patients");
-    const count = res.length ? res[0].values[0][0] : 0;
+    const count = (res.length && res[0].values.length) ? res[0].values[0][0] : 0;
     document.getElementById("cnt").innerText = count;
   }
 
@@ -180,6 +179,7 @@
       data.m = Number(document.getElementById("inM").value) || 0;
       data.r = Number(document.getElementById("inR").value) || 0;
     } else if (step === 4 && dir > 0) {
+      if (!db) { alert("Hintayin muna maging 'SQL Database Ready!' ang status sa itaas."); return; }
       db.run(
         "INSERT INTO patients (name, hist, doc, room, time, bill) VALUES (?, ?, ?, ?, ?, ?)",
         [data.name, data.hist || "None", data.doc || "Unassigned", data.room || "N/A", data.time || "Not Set", data.c + data.l + data.m + data.r]
@@ -197,9 +197,10 @@
   }
 
   function openDB() {
+    if (!db) { alert("Loading pa ang SQL database."); return; }
     const res = db.exec("SELECT * FROM patients ORDER BY id DESC");
     var rows = "";
-    if (res.length) {
+    if (res.length && res[0].values.length) {
       const values = res[0].values;
       for (var i = 0; i < values.length; i++) {
         var x = values[i];
@@ -241,7 +242,6 @@
   }
 
   initSQL();
-  render();
 </script>
 </body>
 </html>
